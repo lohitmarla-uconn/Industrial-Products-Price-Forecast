@@ -1,0 +1,83 @@
+
+
+
+
+
+
+```{r}
+library(tidyverse)
+
+industrial.price.data <- read.csv("~/Documents/GitHub/GitHub/Industrial-Products-Price-Forecast/data/18100266.csv")
+
+columns_to_keep <- c("REF_DATE", "North.American.Product.Classification.System..NAPCS.", "VALUE")
+
+# Use select to keep only the specified columns
+industrial.price.datacmort <- select(industrial.price.data, columns_to_keep)
+
+```
+
+```{r}
+# Load the tidyverse package
+
+industrial.price.data$REF_DATE <- paste(industrial.price.data$REF_DATE, "-01", sep="")
+
+# Convert the 'date' column to a Date type
+industrial.price.data$REF_DATE <- as.Date(industrial.price.data$REF_DATE)
+
+# Pivot the data using tidyr's pivot_wider
+df_pivot <- industrial.price.data %>%
+  pivot_wider(names_from = REF_DATE, values_from = VALUE)
+
+# Print the resulting data frame
+print(df_pivot)
+df_pivot <- distinct(df_pivot, .keep_all = TRUE)
+
+write.csv(df_pivot, "output_file.csv", row.names = FALSE)
+
+```
+
+```{r}
+# Load required libraries
+library(tidyverse)
+library(forecast)
+
+
+
+
+# Create a time series object
+ts_data <- ts(industrial.price.data[, -1], start = c(1956, 1), frequency = 12)  # Assuming the first column is 'date'
+
+# Fit an ARIMA model for each item
+results <- lapply(2:ncol(ts_data), function(i) {
+  item_name <- colnames(ts_data)[i]
+  item_series <- ts_data[, i]
+
+  # Fit ARIMA model
+  arima_model <- auto.arima(item_series)
+
+  # Make predictions
+  forecast_values <- forecast(arima_model, h = 12)  # Adjust h based on your needs
+
+  # Combine actual and forecast values into a data frame
+  result_df <- data.frame(
+    date = time(ts_data),
+    actual = item_series,
+    forecast = forecast_values$mean
+  )
+
+  # Add a column for the item name
+  result_df$item_name <- item_name
+
+  return(result_df)
+})
+
+# Combine the results into a single data frame
+final_results <- do.call(rbind, results)
+
+# Visualize results (you can customize this based on your needs)
+ggplot(final_results, aes(x = date, y = actual, color = item_name)) +
+  geom_line() +
+  geom_line(aes(y = forecast), linetype = "dashed") +
+  labs(title = "ARIMA Forecasting for Items Over Time")
+
+```
