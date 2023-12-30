@@ -9,9 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Lohit Marla" />
 
+<meta name="date" content="2023-12-29" />
 
-<title>industrial_food_price_prediction.knit</title>
+<title>PricePulse: Unraveling Trends in Industrial Food Pricing</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -348,10 +350,57 @@ display: none;
 
 
 
+<h1 class="title toc-ignore">PricePulse: Unraveling Trends in Industrial
+Food Pricing</h1>
+<h4 class="author">Lohit Marla</h4>
+<h4 class="date">2023-12-29</h4>
 
 </div>
 
 
+<div id="introduction" class="section level2">
+<h2>Introduction:</h2>
+<p>In the dynamic landscape of the industrial food sector, understanding
+and predicting fluctuations in the Total Industrial Product Price Index
+(IPPI) is essential for informed decision-making. The IPPI serves as a
+critical economic indicator, reflecting changes in the prices of a
+basket of goods representing the industrial food market. This project
+focuses on harnessing the power of statistical modeling techniques to
+predict the Total IPPI, leveraging key predictors within the
+industry.</p>
+</div>
+<div id="abstract" class="section level2">
+<h2>Abstract:</h2>
+<p>This project centers on the exploration and prediction of the Total
+Industrial Product Price Index (IPPI) in the industrial food domain.
+Spanning the timeline from January 1956 to November 2023, the dataset
+encapsulates a rich historical perspective of the industrial food
+market. The response variable, Total IPPI, stands as a barometer for the
+overall pricing trends within the sector.</p>
+<p>Key predictors, namely Fresh and Frozen Beef and Veal, Fresh and
+Frozen Pork, Fresh and Frozen Lamb, Mutton, and Goat Meat, Complete
+Cattle Feed, and Complete Swine Feed, have been identified as pivotal
+influencers on the Total IPPI. These predictors, drawn from the
+industrial food landscape, encapsulate critical components that
+contribute to the overall pricing dynamics.</p>
+<p>The project employs two powerful modeling approaches – Linear
+Regression and ARIMA. The Linear Regression model unveils the
+relationships between the response variable and predictors, shedding
+light on the impact of each factor on the Total IPPI. Additionally, the
+ARIMA model harnesses the temporal dependencies within the data to make
+time-sensitive predictions.</p>
+<p>The outputs from these models are scrutinized, providing insights
+into the statistical significance of predictors, model fit, and future
+projections. Through a comprehensive analysis of residuals, variance
+inflation factors (VIF), and principal component analysis (PCA), the
+project aims to deliver a robust and interpretable framework for
+forecasting Total IPPI in the industrial food sector.</p>
+<p>By blending historical context, advanced statistical techniques, and
+a keen focus on key predictors, this project endeavors to provide a
+nuanced understanding of pricing dynamics in the industrial food market.
+The outcomes hold the potential to empower stakeholders with actionable
+insights, enabling them to navigate the complexities of the evolving
+industrial food landscape.</p>
 <pre class="r"><code>library(forecast)</code></pre>
 <pre><code>## Registered S3 method overwritten by &#39;quantmod&#39;:
 ##   method            from
@@ -875,6 +924,7 @@ value of Mean Absolute Percentage Error (MAPE) at 7% reinforces the
 notion of a well-performing model. However, the relatively high Mean
 Squared Error (MSE) at 73% signals the need for further diagnostic
 analysis on the data.</p>
+</div>
 
 
 

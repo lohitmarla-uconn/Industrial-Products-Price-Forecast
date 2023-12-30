@@ -1,3 +1,26 @@
+---
+title: "PricePulse: Unraveling Trends in Industrial Food Pricing"
+author: "Lohit Marla"
+date: "2023-12-29"
+output:
+  html_document: default
+---
+
+## Introduction:
+
+In the dynamic landscape of the industrial food sector, understanding and predicting fluctuations in the Total Industrial Product Price Index (IPPI) is essential for informed decision-making. The IPPI serves as a critical economic indicator, reflecting changes in the prices of a basket of goods representing the industrial food market. This project focuses on harnessing the power of statistical modeling techniques to predict the Total IPPI, leveraging key predictors within the industry.
+
+## Abstract:
+
+This project centers on the exploration and prediction of the Total Industrial Product Price Index (IPPI) in the industrial food domain. Spanning the timeline from January 1956 to November 2023, the dataset encapsulates a rich historical perspective of the industrial food market. The response variable, Total IPPI, stands as a barometer for the overall pricing trends within the sector.
+
+Key predictors, namely Fresh and Frozen Beef and Veal, Fresh and Frozen Pork, Fresh and Frozen Lamb, Mutton, and Goat Meat, Complete Cattle Feed, and Complete Swine Feed, have been identified as pivotal influencers on the Total IPPI. These predictors, drawn from the industrial food landscape, encapsulate critical components that contribute to the overall pricing dynamics.
+
+The project employs two powerful modeling approaches – Linear Regression and ARIMA. The Linear Regression model unveils the relationships between the response variable and predictors, shedding light on the impact of each factor on the Total IPPI. Additionally, the ARIMA model harnesses the temporal dependencies within the data to make time-sensitive predictions.
+
+The outputs from these models are scrutinized, providing insights into the statistical significance of predictors, model fit, and future projections. Through a comprehensive analysis of residuals, variance inflation factors (VIF), and principal component analysis (PCA), the project aims to deliver a robust and interpretable framework for forecasting Total IPPI in the industrial food sector.
+
+By blending historical context, advanced statistical techniques, and a keen focus on key predictors, this project endeavors to provide a nuanced understanding of pricing dynamics in the industrial food market. The outcomes hold the potential to empower stakeholders with actionable insights, enabling them to navigate the complexities of the evolving industrial food landscape.
 
 
 ```{r}
