@@ -1,83 +1,238 @@
 
 
-
-
-
-
 ```{r}
-library(tidyverse)
-
-industrial.price.data <- read.csv("~/Documents/GitHub/GitHub/Industrial-Products-Price-Forecast/data/18100266.csv")
-
-columns_to_keep <- c("REF_DATE", "North.American.Product.Classification.System..NAPCS.", "VALUE")
-
-# Use select to keep only the specified columns
-industrial.price.datacmort <- select(industrial.price.data, columns_to_keep)
-
-```
-
-```{r}
-# Load the tidyverse package
-
-industrial.price.data$REF_DATE <- paste(industrial.price.data$REF_DATE, "-01", sep="")
-
-# Convert the 'date' column to a Date type
-industrial.price.data$REF_DATE <- as.Date(industrial.price.data$REF_DATE)
-
-# Pivot the data using tidyr's pivot_wider
-df_pivot <- industrial.price.data %>%
-  pivot_wider(names_from = REF_DATE, values_from = VALUE)
-
-# Print the resulting data frame
-print(df_pivot)
-df_pivot <- distinct(df_pivot, .keep_all = TRUE)
-
-write.csv(df_pivot, "output_file.csv", row.names = FALSE)
-
-```
-
-```{r}
-# Load required libraries
-library(tidyverse)
 library(forecast)
+library(caret)
+library(car)
 
+industrial.price.data <- read.csv("~/Documents/GitHub/GitHub/Industrial-Products-Price-Forecast/data/food_data_selected.csv")
 
+#renaming the columns
+names(industrial.price.data) <- gsub("[[:space:][:digit:]]", "", names(industrial.price.data))
 
+#eliminated the North.American.Product.Classification.System..NAPCS. column
+industrial.price.data <- industrial.price.data[2: ncol(industrial.price.data)]
 
-# Create a time series object
-ts_data <- ts(industrial.price.data[, -1], start = c(1956, 1), frequency = 12)  # Assuming the first column is 'date'
+#verifying the columns for numeric values and removing the non numeric columns
+numeric_columns <- sapply(industrial.price.data, is.numeric)
+columns_with_missing_values <- colnames(industrial.price.data)[colSums(is.na(industrial.price.data[numeric_columns])) > 0]
 
-# Fit an ARIMA model for each item
-results <- lapply(2:ncol(ts_data), function(i) {
-  item_name <- colnames(ts_data)[i]
-  item_series <- ts_data[, i]
+# Impute missing values in numeric columns with the mean
+for (col in columns_with_missing_values) {
+  mean_value <- mean(industrial.price.data[, col], na.rm = TRUE)
+  mean_value_ <- round(mean_value, 2)
+  industrial.price.data[, col][is.na(industrial.price.data[, col])] <- mean_value_
+}
 
-  # Fit ARIMA model
-  arima_model <- auto.arima(item_series)
+# Identify columns with all null values
+empty_columns <- colnames(industrial.price.data)[colSums(is.na(industrial.price.data)) >= 1]
 
-  # Make predictions
-  forecast_values <- forecast(arima_model, h = 12)  # Adjust h based on your needs
-
-  # Combine actual and forecast values into a data frame
-  result_df <- data.frame(
-    date = time(ts_data),
-    actual = item_series,
-    forecast = forecast_values$mean
-  )
-
-  # Add a column for the item name
-  result_df$item_name <- item_name
-
-  return(result_df)
-})
-
-# Combine the results into a single data frame
-final_results <- do.call(rbind, results)
-
-# Visualize results (you can customize this based on your needs)
-ggplot(final_results, aes(x = date, y = actual, color = item_name)) +
-  geom_line() +
-  geom_line(aes(y = forecast), linetype = "dashed") +
-  labs(title = "ARIMA Forecasting for Items Over Time")
+#removing constant values 
+# Check for constant columns
+constant_columns <- names(which(sapply(industrial.price.data, function(x) length(unique(x)) == 1)))
+# Print the constant columns
+print(constant_columns)
+# Remove constant columns
+industrial.price.data <- industrial.price.data[, !names(industrial.price.data) %in% constant_columns]
 
 ```
+
+```{r}
+#linear regression model 
+lmr_model <- lm(Total..Industrial.product.price.index..IPPI. ~ ., data = as.data.frame(industrial.price.data))
+summary(lmr_model)
+```
+**Residuals:**
+Min: The minimum value of the residuals is -25.4245.
+1Q (First Quartile): The value below which 25% of the residuals fall is -2.1876.
+Median: The median (50th percentile) of the residuals is 0.0533.
+3Q (Third Quartile): The value below which 75% of the residuals fall is 3.2509.
+Max: The maximum value of the residuals is 12.1078.
+
+**Coefficients:**
+(Intercept): The intercept of the regression line is estimated to be -4.12094.
+Fresh.and.frozen.beef.and.veal...: The coefficient for this variable is 0.06048, indicating the estimated change in the response variable for a one-unit change in this predictor.
+Fresh.and.frozen.pork...: The coefficient for this variable is 0.32009.
+Fresh.and.frozen.lamb..mutton.and.goat.meat...: The coefficient for this variable is 0.31051.
+Complete.cattle.feed...: The coefficient for this variable is 0.05913.
+Complete.swine.feed...: The coefficient for this variable is 0.40758.
+
+**Residual Standard Error:**
+The standard deviation of the residuals is approximately 5.017.
+R-squared and Adjusted R-squared:
+Multiple R-squared: The proportion of variance in the response variable explained by the model is 97.63%.
+Adjusted R-squared: Similar to R-squared but adjusted for the number of predictors.
+
+**F-Statistic:**
+The F-statistic tests the overall significance of the model.
+A high F-statistic with a low p-value (p-value: < 2.2e-16) suggests that at least one predictor variable is significantly related to the response variable.
+Interpretation:
+The model appears to fit the data well, as indicated by the high R-squared values.
+Each coefficient represents the estimated change in the response variable for a one-unit change in the corresponding predictor, assuming other predictors are held constant.
+The p-values associated with each coefficient suggest that most predictors are statistically significant in predicting the response variable.
+Ensure that the assumptions of linear regression are met, and consider the context of your analysis for a more in-depth interpretation.
+
+In this analysis, we conducted a linear regression to understand the relationship between the Total Industrial Product Price Index (IPPI) and various predictor variables in the business context. The goal is to identify factors that significantly influence the total industrial product prices.
+
+**Residuals:**
+The residuals represent the differences between the actual and predicted values of the Total IPPI. The model seems to have reasonably low residuals, suggesting that it fits the data well.
+
+**Coefficients:**
+Fresh and Frozen Beef and Veal: For every one-unit increase in the fresh and frozen beef and veal product prices, we can expect an increase of approximately 0.06048 in the Total IPPI.
+Fresh and Frozen Pork: Similarly, a one-unit increase in fresh and frozen pork product prices is associated with an increase of about 0.32009 in the Total IPPI.
+Fresh and Frozen Lamb, Mutton, and Goat Meat: An increase of one unit in the prices of these products corresponds to an increase of approximately 0.31051 in the Total IPPI.
+Complete Cattle Feed: The prices of complete cattle feed have a smaller impact, with an increase of around 0.05913 in the Total IPPI for each one-unit increase.
+Complete Swine Feed: The prices of complete swine feed have a more substantial impact, contributing about 0.40758 to the Total IPPI for every one-unit increase.
+Significance:
+All coefficients are statistically significant, as indicated by the significance codes. This suggests that changes in the prices of these products are associated with changes in the Total IPPI.
+
+**Model Fit:**
+The overall model explains about 97.63% of the variance in the Total IPPI, indicating a strong fit. The F-statistic is highly significant (p-value < 0.001), reinforcing the model's overall effectiveness.
+
+**Business Insights:**
+Key Drivers: The prices of fresh and frozen meat products, especially pork, lamb, and beef, have a significant impact on the total industrial product prices.
+Feed Prices: The prices of complete swine feed contribute more significantly than complete cattle feed to the overall industrial product prices.
+Strategic Planning: Understanding these relationships can guide strategic planning, inventory management, and pricing strategies for businesses operating in the industrial product sector.
+
+```{r}
+
+
+cmort.lmfits <- fitted(lmr_model)
+cmort.lmresid <- resid(lmr_model)
+par(mfrow=c(1,2))
+plot(cmort.lmfits, cmort.lmresid, main = "", xlab = "fitted values", 
+     ylab = "residuals")
+car::qqPlot(cmort.lmresid, main = "")
+
+```
+Upon examination of the residual plots, it is evident that the distribution of data points closely adheres to a normal distribution. Additionally, a noteworthy observation is that a substantial proportion of data points exhibit proximity to zero, indicating a favorable alignment with the assumption of homoscedasticity. This alignment with the expected residual distribution and the concentration of data points around zero serves as a positive indicator for the model's adherence to normality and the appropriateness of its fit. 
+
+```{r}
+#checking for aliases with estimate as 0
+alias_model <- alias(lm(Total..Industrial.product.price.index..IPPI. ~ ., data = as.data.frame(industrial.price.data)))
+num_aliased <- sum(alias_model$Estimate == 0)
+print(num_aliased)
+
+#principle component analysis
+pca_result <- prcomp(as.matrix(industrial.price.data), scale = TRUE)
+pca_result
+
+#checking for collinearity
+vif_values <- vif(lmr_model)
+vif_condition <- max(vif_values)/min(vif_values)
+high_vif_variables <- names(vif_values[vif_values > vif_condition])
+# Print the variables with high VIF
+print(high_vif_variables)
+# Convert the result to a named list
+high_vif_list <- as.list(setNames(high_vif_variables, high_vif_variables))
+print(high_vif_list)
+
+```
+
+```{r}
+
+#splitting the data based on the first 700 rows as train and the last rows as test data as the data is dependent 
+n.train <- 700 #length(train set)
+train.alldat <- data.frame(industrial.price.data[1:n.train, ])
+test.alldat <- data.frame(industrial.price.data[(n.train + 1):nrow(industrial.price.data), ])
+
+```
+
+```{r}
+ts_res <- ts(train.alldat$Total..Industrial.product.price.index..IPPI., start = c(1956, 1) , end = c(2023, 11), frequency = 12 )
+# Convert the dataframe to a multivariate time series object
+#industrial.price.data_ <- industrial.price.data[, -c("Total..Industrial.product.price.index..IPPI." )]
+# Assuming ts_multivariate is your multivariate time series
+industrial.price.data_ <- train.alldat[, -which(names(train.alldat) == "Total..Industrial.product.price.index..IPPI.")]
+
+ts_multivariate <- ts(industrial.price.data_, start = c(1956, 1), end = c(2023, 11), frequency = 12)
+
+fit <- auto.arima(ts_res, xreg = ts_multivariate)
+
+fit
+
+```
+**Model Specification:**
+ARIMA(0,1,1): The model includes a moving average (MA) component of order 1, and a differencing of order 1. This suggests that the first difference of the series is used to achieve stationarity, and a one-period lag of the errors is included in the model.
+Seasonal Component: There is a seasonal component with a lag of 12 (monthly seasonality).
+
+**Coefficients:**
+ma1 (Moving Average): The coefficient for the moving average term is 0.2070, indicating the strength and direction of the impact of the moving average on the series.
+sma1 (Seasonal Moving Average): The coefficient for the seasonal moving average term is 0.0757.
+
+**Coefficients for Predictors:**
+The coefficients for the predictor variables (Fresh and frozen beef and veal, pork, lamb, complete cattle feed, complete swine feed) represent their respective contributions to the time series.
+For example, a unit increase in Fresh and frozen beef and veal is associated with an increase of 0.2031 in the series, holding other factors constant.
+
+**Standard Errors:**
+s.e. (Standard Error): These values represent the standard errors associated with each coefficient estimate. They provide a measure of the uncertainty or precision of the estimates.
+
+**Model Fit:**
+Sigma^2 (Variance of Errors): The estimated variance of the errors (residuals) is 0.6185.
+Log Likelihood: The log likelihood is -956.03, indicating the maximized log likelihood of the model.
+AIC, AICc, BIC: These are information criteria used for model selection. Lower values indicate a better-fitting model. In this case, AIC=1928.07, AICc=1928.25, and BIC=1965.68.
+
+**Interpretation:**
+The ARIMA model with the specified parameters and predictor variables is fitted to the time series data.
+Coefficients and their standard errors provide insights into the impact of each component on the series.
+The information criteria (AIC, AICc, BIC) help evaluate the model's goodness of fit and guide model selection.
+
+```{r}
+cmort.lmfits <- fitted(fit)
+cmort.lmresid <- resid(fit)
+par(mfrow=c(1,2))
+plot(cmort.lmfits, cmort.lmresid, main = "", xlab = "fitted values", 
+     ylab = "residuals")
+car::qqPlot(cmort.lmresid, main = "")
+
+acf(resid(fit), ylim = c(-1, 1), main = "", xlab = "lag h")
+
+ts.plot(cmort.lmresid, ylab = "residuals", xlab = "t")
+
+```
+In the residual quantile-quantile plot, deviations of data points from the center line are noticeable on both sides. However, in the autocorrelation function plot, it is evident that the data points consistently fall below the blue dotted line, indicating a positive signal.
+
+Following code is to predict values on the test data by the model fitted above
+```{r}
+
+#test data forecast
+regmat.test <- as.matrix(test.alldat[, -which(names(train.alldat) == "Total..Industrial.product.price.index..IPPI.")])
+armaxfcst.all <- forecast(fit, xreg = regmat.test)
+armaxfcst.all
+
+cmort.lmfits <- fitted(armaxfcst.all)
+cmort.lmresid <- resid(armaxfcst.all)
+par(mfrow=c(1,2))
+plot(cmort.lmfits, cmort.lmresid, main = "", xlab = "fitted values", 
+     ylab = "residuals")
+car::qqPlot(cmort.lmresid, main = "")
+
+acf(resid(armaxfcst.all), ylim = c(-1, 1), main = "", xlab = "lag h")
+
+
+```
+In the residual quantile-quantile plot, deviations of data points from the center line are noticeable on both sides. However, in the autocorrelation function plot, it is evident that the data points consistently fall below the blue dotted line, indicating a positive signal.
+
+```{r}
+
+(armaxfcst <- armaxfcst.all$mean)
+(armaxfcsterr <- test.alldat$Total..Industrial.product.price.index..IPPI. - armaxfcst)
+
+```
+ME and MPE measure the bias in the forecasts. Values close to 0 indicate a better model.
+
+MSE, MAE, and MAPE measure the accuracy of the forecasts. Small values of these indicate a better model. Note that MAPE is a percentage, which is computed to be agnostic to the scale of the response, and is widely used for selecting the best model.
+
+We evaluate the forecast validity criteria ME, MPE, MSE, MAE, and MAPE for cmort using the setup shown below.
+
+```{r}
+(me.armaxfcst <- mean(armaxfcsterr))  #ME
+(mpe.armaxfcst <- 100*(mean(armaxfcsterr/test.alldat$Total..Industrial.product.price.index..IPPI.))) # MPE
+(mse.armaxfcst <- sum(armaxfcsterr**2)/nrow(test.alldat))      # MSE
+(mae.armaxfcst <- mean(abs(armaxfcsterr)))                # MAE
+(mape.armaxfcst <- 100*mean(abs(armaxfcsterr/test.alldat$Total..Industrial.product.price.index..IPPI.))) # MAPE 
+
+```
+The close-to-zero values for both Mean Error (ME) and Mean Percentage Error (MPE) suggest the model's overall accuracy. Similarly, the low value of Mean Absolute Percentage Error (MAPE) at 7% reinforces the notion of a well-performing model. However, the relatively high Mean Squared Error (MSE) at 73% signals the need for further diagnostic analysis on the data.
+
+
